@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fat-Sourced Deficit Readout</title>
+  <style>
+    :root {
+      --bg: #14171a;
+      --panel: #1c2024;
+      --panel-2: #20262b;
+      --panel-3: #262d33;
+      --line: #2c3339;
+      --text: #e8e6e1;
+      --dim: #8b939a;
+      --amber: #f2a93b;
+      --amber-dim: #8a662a;
+      --teal: #4fa8a0;
+      --aggr: #e05b3f;
+      --cons: #4fa8a0;
+      --mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 48px 20px 80px;
+      background-image:
+        linear-gradient(var(--line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--line) 1px, transparent 1px);
+      background-size: 32px 32px;
+      background-position: center top;
+      background-color: var(--bg);
+      background-attachment: fixed;
+    }
+
+    .wrap {
+      width: 100%;
+      max-width: 640px;
+    }
+
+    .eyebrow {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--dim);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .eyebrow .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--amber);
+      box-shadow: 0 0 8px var(--amber);
+    }
+
+    h1 {
+      font-family: var(--sans);
+      font-size: clamp(28px, 5vw, 38px);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin: 0 0 6px;
+      line-height: 1.1;
+    }
+
+    .sub {
+      color: var(--dim);
+      font-size: 14.5px;
+      line-height: 1.55;
+      max-width: 52ch;
+      margin: 0 0 34px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 26px 26px 22px;
+      margin-bottom: 18px;
+    }
+
+    .panel-title {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin: 0 0 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .subhead {
+      font-family: var(--mono);
+      font-size: 10.5px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin: 22px 0 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+    }
+
+    .inputs.two-col {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .field label {
+      display: block;
+      font-size: 12.5px;
+      color: var(--dim);
+      margin-bottom: 7px;
+    }
+
+    .field-input {
+      position: relative;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 10px 12px;
+      transition: border-color .15s;
+    }
+
+    .field-input:focus-within {
+      border-color: var(--amber-dim);
+    }
+
+    .field-input input,
+    .field-input select {
+      flex: 1;
+      min-width: 0;
+      width: 100%;
+      height: 24px;
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 19px;
+      font-weight: 600;
+      line-height: 24px;
+      box-sizing: border-box;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+    }
+
+    .field-input select {
+      font-size: 14px;
+      cursor: pointer;
+      padding-right: 18px;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='%238b939a' d='M6 8 0 0h12z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right center;
+      background-size: 10px 7px;
+    }
+
+    .field-input select option {
+      background: var(--panel-2);
+      color: var(--text);
+      font-family: var(--sans);
+    }
+
+    .field-input .unit {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--dim);
+      margin-left: 8px;
+    }
+
+    .slider-row {
+      margin-top: 22px;
+    }
+
+    .slider-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 10px;
+    }
+
+    .slider-head label {
+      font-size: 12.5px;
+      color: var(--dim);
+    }
+
+    .slider-head .xval {
+      font-family: var(--mono);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--amber);
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, var(--aggr), var(--amber) 50%, var(--cons));
+      outline: none;
+      margin: 6px 0 8px;
+    }
+
+    input[type=range].neutral {
+      background: linear-gradient(90deg, var(--teal), var(--amber));
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--text);
+      border: 3px solid var(--bg);
+      box-shadow: 0 0 0 1px var(--line), 0 2px 6px rgba(0, 0, 0, .5);
+      cursor: pointer;
+      margin-top: -6px;
+    }
+
+    input[type=range]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--text);
+      border: 3px solid var(--bg);
+      cursor: pointer;
+    }
+
+    .scale-labels {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--mono);
+      font-size: 10.5px;
+      color: var(--dim);
+      letter-spacing: .05em;
+    }
+
+    .scale-labels span:first-child {
+      color: var(--aggr);
+    }
+
+    .scale-labels span:last-child {
+      color: var(--cons);
+    }
+
+    /* Toggle */
+    .toggle {
+      display: inline-flex;
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 3px;
+      gap: 3px;
+    }
+
+    .toggle button {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+      background: transparent;
+      border: none;
+      color: var(--dim);
+      padding: 7px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background .15s, color .15s;
+    }
+
+    .toggle button.active {
+      background: var(--amber-dim);
+      color: var(--text);
+    }
+
+    .toggle-section {
+      display: none;
+    }
+
+    .toggle-section.active {
+      display: block;
+    }
+
+    .estimate-readout {
+      margin-top: 14px;
+      background: var(--panel-3);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      font-size: 13px;
+      color: var(--dim);
+      gap: 10px;
+    }
+
+    .estimate-readout .val {
+      font-family: var(--mono);
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--teal);
+      white-space: nowrap;
+    }
+
+    .estimate-readout+.estimate-readout {
+      margin-top: 8px;
+    }
+
+    .check-row {
+      margin-top: 14px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 12.5px;
+      color: var(--dim);
+    }
+
+    .check-row input[type=checkbox] {
+      width: 15px;
+      height: 15px;
+      accent-color: var(--amber);
+      cursor: pointer;
+    }
+
+    .check-row label {
+      cursor: pointer;
+    }
+
+    .readout {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 26px;
+      margin-bottom: 18px;
+    }
+
+    .readout-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1px;
+      background: var(--line);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .metric {
+      background: var(--panel-2);
+      padding: 20px 22px;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .metric.hero {
+      background: #232a22;
+    }
+
+    .metric.hero.warn {
+      background: #2a2320;
+    }
+
+    .metric-label {
+      font-size: 13px;
+      color: var(--dim);
+    }
+
+    .metric-label .note {
+      display: block;
+      font-family: var(--mono);
+      font-size: 10.5px;
+      color: #5c6469;
+      margin-top: 3px;
+    }
+
+    .metric-value {
+      font-family: var(--mono);
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    .metric.hero .metric-value {
+      color: var(--amber);
+      font-size: 30px;
+    }
+
+    .metric.hero.warn .metric-value {
+      color: var(--aggr);
+      font-size: 16px;
+      white-space: normal;
+      text-align: right;
+      font-weight: 600;
+    }
+
+    .metric-value .unit {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--dim);
+      margin-left: 5px;
+    }
+
+    .foot {
+      margin-top: 22px;
+      font-size: 12px;
+      color: #5c6469;
+      line-height: 1.6;
+    }
+
+    .foot strong {
+      color: var(--dim);
+    }
+
+    /* Range table */
+    .range-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--mono);
+    }
+
+    .range-table th {
+      text-align: right;
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--dim);
+      padding: 0 10px 10px;
+      font-weight: 500;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .range-table th:first-child,
+    .range-table td:first-child {
+      text-align: left;
+    }
+
+    .range-table td {
+      text-align: right;
+      padding: 9px 10px;
+      font-size: 13.5px;
+      border-bottom: 1px solid var(--line);
+      color: var(--text);
+    }
+
+    .range-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .range-table tr.current td {
+      background: rgba(242, 169, 59, 0.1);
+      color: var(--amber);
+      font-weight: 700;
+    }
+
+    .range-table td.tag {
+      font-family: var(--sans);
+      font-size: 10.5px;
+      color: var(--dim);
+    }
+
+    .range-table tr.current td.tag {
+      color: var(--amber);
+    }
+
+    @media (max-width:480px) {
+      .inputs {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .inputs.two-col {
+        grid-template-columns: 1fr;
+      }
+
+      .metric {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+      }
+
+      .metric.hero.warn .metric-value {
+        text-align: left;
+      }
+
+      .range-table {
+        font-size: 12px;
+      }
+
+      .range-table th,
+      .range-table td {
+        padding: 8px 6px;
+      }
+
+      .estimate-readout {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="eyebrow"><span class="dot"></span>METABOLIC READOUT</div>
+    <h1>Fat-sourced deficit</h1>
+    <p class="sub">Estimates the weekly rate of loss your body can plausibly draw entirely from fat stores, given your
+      body fat percentage. Push the dial toward aggressive and more of the loss risks coming from lean mass; stay
+      conservative to keep the deficit fully fat-sourced.</p>
+
+    <div class="panel">
+      <p class="panel-title">Biometrics</p>
+      <div class="inputs">
+        <div class="field">
+          <label for="mass">Body mass</label>
+          <div class="field-input">
+            <input type="number" id="mass" inputmode="decimal" value="80" min="0" step="0.1">
+            <span class="unit">kg</span>
+          </div>
+        </div>
+        <div class="field">
+          <label for="height">Height</label>
+          <div class="field-input">
+            <input type="number" id="height" inputmode="decimal" value="175" min="0" step="0.5">
+            <span class="unit">cm</span>
+          </div>
+        </div>
+        <div class="field">
+          <label for="sex">Sex</label>
+          <div class="field-input">
+            <select id="sex">
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <p class="subhead">
+        Body fat
+        <span class="toggle" id="bfToggle">
+          <button type="button" data-mode="manual" class="active">Known</button>
+          <button type="button" data-mode="estimate">Estimate</button>
+        </span>
+      </p>
+
+      <div class="toggle-section active" id="bfManual">
+        <div class="field">
+          <label for="bf">Body fat</label>
+          <div class="field-input">
+            <input type="number" id="bf" inputmode="decimal" value="20" min="0" max="70" step="0.1">
+            <span class="unit">%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="toggle-section" id="bfEstimate">
+        <div class="inputs two-col">
+          <div class="field">
+            <label for="neck">Neck circumference</label>
+            <div class="field-input">
+              <input type="number" id="neck" inputmode="decimal" value="38" min="0" step="0.1">
+              <span class="unit">cm</span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="waist">Waist circumference</label>
+            <div class="field-input">
+              <input type="number" id="waist" inputmode="decimal" value="90" min="0" step="0.1">
+              <span class="unit">cm</span>
+            </div>
+          </div>
+          <div class="field" id="hipField">
+            <label for="hip">Hip circumference</label>
+            <div class="field-input">
+              <input type="number" id="hip" inputmode="decimal" value="100" min="0" step="0.1">
+              <span class="unit">cm</span>
+            </div>
+          </div>
+        </div>
+        <div class="estimate-readout">
+          <span>Estimated body fat (US Navy method)</span>
+          <span class="val" id="bfEstimateVal">—%</span>
+        </div>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-head">
+          <label for="xval">Certainty factor (X)</label>
+          <span class="xval" id="xDisplay">16</span>
+        </div>
+        <input type="range" id="xval" min="13" max="20" step="1" value="16">
+        <div class="scale-labels">
+          <span>13 — aggressive</span>
+          <span>20 — conservative</span>
+        </div>
+      </div>
+      <p class="foot">Body fat estimate uses the <strong>US Navy circumference method</strong> — waist, neck (and hip
+        for women), plus height. No special equipment needed beyond a tape measure; typical error is around ±3–4
+        percentage points versus DEXA. Measure waist at the navel and neck just below the larynx, relaxed, not sucked
+        in.</p>
+    </div>
+
+    <div class="panel">
+      <p class="panel-title">Daily steps</p>
+      <div class="inputs two-col">
+        <div class="field">
+          <label for="steps">Steps per day</label>
+          <div class="field-input">
+            <input type="number" id="steps" inputmode="numeric" value="8000" min="0" step="100">
+            <span class="unit">steps</span>
+          </div>
+        </div>
+        <div class="field">
+          <label for="pace">Walking pace</label>
+          <div class="field-input">
+            <input type="number" id="pace" inputmode="decimal" value="5.0" min="1" max="9" step="0.1">
+            <span class="unit">km/h</span>
+          </div>
+        </div>
+      </div>
+
+      <p class="subhead">
+        Terrain
+        <span class="toggle" id="terrainToggle">
+          <button type="button" data-mode="flat" class="active">Flat</button>
+          <button type="button" data-mode="incline">Incline</button>
+        </span>
+      </p>
+
+      <div class="toggle-section" id="inclineSection">
+        <div class="slider-row" style="margin-top:0;">
+          <div class="slider-head">
+            <label for="grade">Grade</label>
+            <span class="xval" id="gradeDisplay" style="color:var(--teal);">5%</span>
+          </div>
+          <input type="range" id="grade" class="neutral" min="0" max="20" step="1" value="5">
+        </div>
+      </div>
+
+      <div class="estimate-readout">
+        <span>Distance covered</span>
+        <span class="val" id="stepsDistance">— km</span>
+      </div>
+      <div class="estimate-readout">
+        <span>Calories burned walking (gross)</span>
+        <span class="val" id="stepsGross">— kcal</span>
+      </div>
+      <div class="estimate-readout">
+        <span>Extra above resting (net)</span>
+        <span class="val" id="stepsNet">— kcal</span>
+      </div>
+      <div class="check-row">
+        <input type="checkbox" id="includeSteps" checked>
+        <label for="includeSteps">Add the net step calories to TDEE below</label>
+      </div>
+      <p class="foot">Uses stride length from height (~0.41–0.42× height per step) to convert steps to distance, then
+        the ACSM walking equation — which factors in your mass, pace, and grade — to estimate energy cost.
+        <strong>Net</strong> is the extra burn above resting, the right figure to add on top of a maintenance estimate.
+        If your activity level below already reflects this many daily steps, uncheck the box to avoid double-counting.
+      </p>
+    </div>
+
+    <div class="panel">
+      <p class="panel-title">
+        Maintenance (TDEE)
+        <span class="toggle" id="tdeeToggle">
+          <button type="button" data-mode="manual" class="active">Known</button>
+          <button type="button" data-mode="estimate">Estimate</button>
+        </span>
+      </p>
+
+      <div class="toggle-section active" id="tdeeManual">
+        <div class="field">
+          <label for="tdeeInput">Daily maintenance calories</label>
+          <div class="field-input">
+            <input type="number" id="tdeeInput" inputmode="decimal" placeholder="e.g. from a tracker" min="0" step="10">
+            <span class="unit">kcal / day</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="toggle-section" id="tdeeEstimate">
+        <div class="inputs two-col">
+          <div class="field">
+            <label for="age">Age</label>
+            <div class="field-input">
+              <input type="number" id="age" inputmode="numeric" value="30" min="14" max="100" step="1">
+              <span class="unit">yrs</span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="activity">Activity level</label>
+            <div class="field-input">
+              <select id="activity">
+                <option value="1.2">Sedentary</option>
+                <option value="1.375">Light (1–3x/wk)</option>
+                <option value="1.55" selected>Moderate (3–5x/wk)</option>
+                <option value="1.725">Active (6–7x/wk)</option>
+                <option value="1.9">Very active</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <p class="foot">Uses Mifflin-St Jeor with the mass, height, and sex from Biometrics above.</p>
+      </div>
+
+      <div class="estimate-readout" id="tdeeFinalRow" style="margin-top:16px;">
+        <span>TDEE incl. step calories</span>
+        <span class="val" id="tdeeFinalVal">—</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <p class="panel-title">
+        Goal
+        <span class="toggle" id="goalToggle">
+          <button type="button" data-mode="bf" class="active">Target BF%</button>
+          <button type="button" data-mode="mass">Target weight</button>
+        </span>
+      </p>
+
+      <div class="toggle-section active" id="goalBF">
+        <div class="field">
+          <label for="goalBFInput">Target body fat</label>
+          <div class="field-input">
+            <input type="number" id="goalBFInput" inputmode="decimal" value="15" min="0" max="70" step="0.1">
+            <span class="unit">%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="toggle-section" id="goalMass">
+        <div class="field">
+          <label for="goalMassInput">Target body mass</label>
+          <div class="field-input">
+            <input type="number" id="goalMassInput" inputmode="decimal" value="75" min="0" step="0.1">
+            <span class="unit">kg</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="readout">
+      <p class="panel-title">Sustainable output</p>
+      <div class="readout-grid">
+        <div class="metric hero" id="targetRow">
+          <div class="metric-label" id="targetLabel">Daily calorie target
+            <span class="note" id="targetNote">TDEE − daily deficit</span>
+          </div>
+          <div class="metric-value" id="outTarget">—<span class="unit">kcal / day</span></div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Fat loss per week
+            <span class="note">bf% ÷ X × 0.01 × mass</span>
+          </div>
+          <div class="metric-value" id="outKg">—<span class="unit">kg</span></div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Weekly deficit budget
+            <span class="note">at 7700 kcal per kg fat</span>
+          </div>
+          <div class="metric-value" id="outWeekKcal">—<span class="unit">kcal</span></div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Daily deficit budget
+            <span class="note">weekly ÷ 7</span>
+          </div>
+          <div class="metric-value" id="outDayKcal">—<span class="unit">kcal / day</span></div>
+        </div>
+      </div>
+      <p class="foot"><strong>Reading the dial —</strong> X=13 assumes a narrower margin of safety and pushes toward a
+        faster, more aggressive rate; X=20 assumes a wider margin and keeps the deficit conservatively within what fat
+        stores alone can supply. This is a modeling estimate, not a medical recommendation — actual composition of
+        weight lost also depends on training, protein intake, and sleep.</p>
+    </div>
+
+    <div class="readout">
+      <p class="panel-title">Time to goal</p>
+      <div class="readout-grid">
+        <div class="metric hero" id="etaRow">
+          <div class="metric-label" id="etaLabel">Estimated time
+            <span class="note" id="etaNote">continuous fat-mass decay at this X</span>
+          </div>
+          <div class="metric-value" id="outWeeks">—<span class="unit">weeks</span></div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Projected date</div>
+          <div class="metric-value" id="outDate">—</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Weekly rate, now → goal
+            <span class="note">rate falls as fat mass falls</span>
+          </div>
+          <div class="metric-value" id="outRateRange">—<span class="unit">kg/wk</span></div>
+        </div>
+      </div>
+      <p class="foot"><strong>Why the rate isn't constant —</strong> weekly fat loss equals current fat mass ÷ X, so as
+        fat mass drops the same X yields a smaller weekly amount — fat mass decays geometrically rather than linearly.
+        Lean mass is held constant throughout; if a goal implies losing more fat mass than you have, or your target
+        isn't below your current values, no estimate is shown.</p>
+    </div>
+
+    <div class="panel">
+      <p class="panel-title">Range across X (13–20)</p>
+      <table class="range-table">
+        <thead>
+          <tr>
+            <th>X</th>
+            <th>kg / week</th>
+            <th>kcal / day deficit</th>
+            <th id="targetColHead">Target kcal / day</th>
+          </tr>
+        </thead>
+        <tbody id="rangeBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const massEl = document.getElementById('mass');
+    const heightEl = document.getElementById('height');
+    const sexEl = document.getElementById('sex');
+    const bfEl = document.getElementById('bf');
+    const xEl = document.getElementById('xval');
+    const xDisplay = document.getElementById('xDisplay');
+
+    const outKg = document.getElementById('outKg');
+    const outWeekKcal = document.getElementById('outWeekKcal');
+    const outDayKcal = document.getElementById('outDayKcal');
+    const outTarget = document.getElementById('outTarget');
+    const targetNote = document.getElementById('targetNote');
+    const targetColHead = document.getElementById('targetColHead');
+    const rangeBody = document.getElementById('rangeBody');
+
+    const bfToggle = document.getElementById('bfToggle');
+    const bfManual = document.getElementById('bfManual');
+    const bfEstimate = document.getElementById('bfEstimate');
+    const neckEl = document.getElementById('neck');
+    const waistEl = document.getElementById('waist');
+    const hipEl = document.getElementById('hip');
+    const hipField = document.getElementById('hipField');
+    const bfEstimateVal = document.getElementById('bfEstimateVal');
+
+    const stepsEl = document.getElementById('steps');
+    const paceEl = document.getElementById('pace');
+    const terrainToggle = document.getElementById('terrainToggle');
+    const inclineSection = document.getElementById('inclineSection');
+    const gradeEl = document.getElementById('grade');
+    const gradeDisplay = document.getElementById('gradeDisplay');
+    const stepsDistance = document.getElementById('stepsDistance');
+    const stepsGross = document.getElementById('stepsGross');
+    const stepsNet = document.getElementById('stepsNet');
+    const includeStepsEl = document.getElementById('includeSteps');
+
+    const tdeeToggle = document.getElementById('tdeeToggle');
+    const tdeeManual = document.getElementById('tdeeManual');
+    const tdeeEstimate = document.getElementById('tdeeEstimate');
+    const tdeeInput = document.getElementById('tdeeInput');
+    const ageEl = document.getElementById('age');
+    const activityEl = document.getElementById('activity');
+    const tdeeFinalVal = document.getElementById('tdeeFinalVal');
+
+    const goalToggle = document.getElementById('goalToggle');
+    const goalBFSection = document.getElementById('goalBF');
+    const goalMassSection = document.getElementById('goalMass');
+    const goalBFInput = document.getElementById('goalBFInput');
+    const goalMassInput = document.getElementById('goalMassInput');
+
+    const etaRow = document.getElementById('etaRow');
+    const etaNote = document.getElementById('etaNote');
+    const outWeeks = document.getElementById('outWeeks');
+    const outDate = document.getElementById('outDate');
+    const outRateRange = document.getElementById('outRateRange');
+
+    const KCAL_PER_KG_FAT = 7700;
+    const KCAL_PER_LITER_O2 = 5;
+    let bfMode = 'manual';
+    let tdeeMode = 'manual';
+    let goalMode = 'bf';
+    let terrainMode = 'flat';
+
+    function fmt(n, decimals) {
+      if (!isFinite(n)) return '—';
+      return n.toLocaleString('en-US', {minimumFractionDigits: decimals, maximumFractionDigits: decimals});
+    }
+
+    function wireToggle(toggleEl, onChange) {
+      toggleEl.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-mode]');
+        if (!btn) return;
+        [...toggleEl.querySelectorAll('button')].forEach(b => b.classList.toggle('active', b === btn));
+        onChange(btn.dataset.mode);
+        recalc();
+      });
+    }
+
+    wireToggle(bfToggle, (mode) => {
+      bfMode = mode;
+      bfManual.classList.toggle('active', bfMode === 'manual');
+      bfEstimate.classList.toggle('active', bfMode === 'estimate');
+    });
+
+    wireToggle(terrainToggle, (mode) => {
+      terrainMode = mode;
+      inclineSection.classList.toggle('active', terrainMode === 'incline');
+    });
+
+    wireToggle(tdeeToggle, (mode) => {
+      tdeeMode = mode;
+      tdeeManual.classList.toggle('active', tdeeMode === 'manual');
+      tdeeEstimate.classList.toggle('active', tdeeMode === 'estimate');
+    });
+
+    wireToggle(goalToggle, (mode) => {
+      goalMode = mode;
+      goalBFSection.classList.toggle('active', goalMode === 'bf');
+      goalMassSection.classList.toggle('active', goalMode === 'mass');
+    });
+
+    sexEl.addEventListener('change', () => {
+      hipField.style.display = sexEl.value === 'female' ? '' : 'none';
+      recalc();
+    });
+
+    gradeEl.addEventListener('input', () => {
+      gradeDisplay.textContent = gradeEl.value + '%';
+    });
+
+    includeStepsEl.addEventListener('change', recalc);
+
+    // US Navy circumference method. Returns body fat % or null if inputs are invalid.
+    function navyBF() {
+      const height = parseFloat(heightEl.value);
+      const neck = parseFloat(neckEl.value);
+      const waist = parseFloat(waistEl.value);
+      const sex = sexEl.value;
+      if (!isFinite(height) || !isFinite(neck) || !isFinite(waist) || height <= 0 || neck <= 0 || waist <= 0) return null;
+
+      let val;
+      if (sex === 'male') {
+        const diff = waist - neck;
+        if (diff <= 0) return null;
+        val = 495 / (1.0324 - 0.19077 * Math.log10(diff) + 0.15456 * Math.log10(height)) - 450;
+      } else {
+        const hip = parseFloat(hipEl.value);
+        if (!isFinite(hip) || hip <= 0) return null;
+        const diff = waist + hip - neck;
+        if (diff <= 0) return null;
+        val = 495 / (1.29579 - 0.35004 * Math.log10(diff) + 0.22100 * Math.log10(height)) - 450;
+      }
+      if (!isFinite(val) || val <= 0 || val >= 70) return null;
+      return val;
+    }
+
+    function getBF() {
+      if (bfMode === 'manual') {
+        const v = parseFloat(bfEl.value);
+        return isFinite(v) && v >= 0 ? v : null;
+      } else {
+        return navyBF();
+      }
+    }
+
+    // Steps -> distance -> ACSM walking energy cost (accounts for mass, pace, grade).
+    function getStepsEstimate() {
+      const height = parseFloat(heightEl.value);
+      const mass = parseFloat(massEl.value);
+      const steps = parseFloat(stepsEl.value);
+      const pace = parseFloat(paceEl.value);
+      const sex = sexEl.value;
+
+      if (!isFinite(height) || !isFinite(mass) || !isFinite(steps) || !isFinite(pace) || height <= 0 || mass <= 0 || steps < 0 || pace <= 0) {
+        return null;
+      }
+
+      const strideFactor = sex === 'male' ? 0.415 : 0.413;
+      const strideLength_m = (height / 100) * strideFactor;
+      const distance_km = (steps * strideLength_m) / 1000;
+
+      const speed_m_min = (pace * 1000) / 60;
+      const grade = terrainMode === 'incline' ? (parseFloat(gradeEl.value) / 100) : 0;
+
+      // ACSM walking equation: VO2 (ml/kg/min)
+      const vo2 = 0.1 * speed_m_min + 1.8 * speed_m_min * grade + 3.5;
+      const restingVo2 = 3.5;
+
+      const time_min = distance_km > 0 ? (distance_km * 1000) / speed_m_min : 0;
+
+      const grossKcal = (vo2 * mass / 1000) * KCAL_PER_LITER_O2 * time_min;
+      const netKcal = ((vo2 - restingVo2) * mass / 1000) * KCAL_PER_LITER_O2 * time_min;
+
+      return {distance_km, grossKcal, netKcal: Math.max(netKcal, 0)};
+    }
+
+    function getTDEE() {
+      let base;
+      if (tdeeMode === 'manual') {
+        const v = parseFloat(tdeeInput.value);
+        base = (isFinite(v) && v > 0) ? v : null;
+      } else {
+        const age = parseFloat(ageEl.value);
+        const height = parseFloat(heightEl.value);
+        const mass = parseFloat(massEl.value);
+        const activity = parseFloat(activityEl.value);
+        const sex = sexEl.value;
+        if (!isFinite(age) || !isFinite(height) || !isFinite(mass) || !isFinite(activity)) {
+          base = null;
+        } else {
+          let bmr = 10 * mass + 6.25 * height - 5 * age;
+          bmr += (sex === 'male') ? 5 : -161;
+          base = bmr > 0 ? bmr * activity : null;
+        }
+      }
+      return base;
+    }
+
+    function computeForX(x, mass, bf, tdee) {
+      const kgPerWeek = (bf / x) * 0.01 * mass;
+      const weekKcal = kgPerWeek * KCAL_PER_KG_FAT;
+      const dayKcal = weekKcal / 7;
+      const target = tdee !== null ? (tdee - dayKcal) : null;
+      return {kgPerWeek, weekKcal, dayKcal, target};
+    }
+
+    // Weekly loss = (bf/X)*0.01*mass = (bf/100*mass)/X = fatMass / X — depends only on current fat mass.
+    // So fat mass decays geometrically week over week: fatMass(t) = fatMass0 * (1 - 1/X)^t
+    function weeksToGoal(fatMass0, fatMassTarget, x) {
+      const retain = 1 - 1 / x;
+      if (fatMassTarget <= 0 || fatMassTarget >= fatMass0) return null;
+      if (retain <= 0 || retain >= 1) return null;
+      const weeks = Math.log(fatMassTarget / fatMass0) / Math.log(retain);
+      return isFinite(weeks) && weeks > 0 ? weeks : null;
+    }
+
+    function recalc() {
+      const mass = parseFloat(massEl.value);
+      const bf = getBF();
+      const x = parseFloat(xEl.value);
+      xDisplay.textContent = x;
+
+      if (bfMode === 'estimate') {
+        bfEstimateVal.textContent = bf !== null ? fmt(bf, 1) + '%' : '—%';
+      }
+
+      // Steps
+      const stepsEst = getStepsEstimate();
+      if (stepsEst) {
+        stepsDistance.textContent = fmt(stepsEst.distance_km, 2) + ' km';
+        stepsGross.textContent = fmt(stepsEst.grossKcal, 0) + ' kcal';
+        stepsNet.textContent = fmt(stepsEst.netKcal, 0) + ' kcal';
+      } else {
+        stepsDistance.textContent = '— km';
+        stepsGross.textContent = '— kcal';
+        stepsNet.textContent = '— kcal';
+      }
+
+      const baseTdee = getTDEE();
+      const stepsAddOn = (includeStepsEl.checked && stepsEst) ? stepsEst.netKcal : 0;
+      const tdee = baseTdee !== null ? baseTdee + stepsAddOn : null;
+
+      if (tdee !== null && stepsAddOn > 0) {
+        tdeeFinalVal.textContent = fmt(baseTdee, 0) + ' + ' + fmt(stepsAddOn, 0) + ' = ' + fmt(tdee, 0) + ' kcal';
+      } else if (tdee !== null) {
+        tdeeFinalVal.textContent = fmt(tdee, 0) + ' kcal';
+      } else {
+        tdeeFinalVal.textContent = '—';
+      }
+
+      targetColHead.textContent = tdee !== null ? 'Target kcal / day' : 'Target (add TDEE)';
+
+      const validBase = isFinite(mass) && mass > 0 && bf !== null && bf >= 0;
+
+      if (!validBase) {
+        outKg.innerHTML = '—<span class="unit">kg</span>';
+        outWeekKcal.innerHTML = '—<span class="unit">kcal</span>';
+        outDayKcal.innerHTML = '—<span class="unit">kcal / day</span>';
+        outTarget.innerHTML = '—<span class="unit">kcal / day</span>';
+        rangeBody.innerHTML = '';
+        etaRow.classList.remove('warn');
+        outWeeks.innerHTML = '—<span class="unit">weeks</span>';
+        outDate.textContent = '—';
+        outRateRange.innerHTML = '—<span class="unit">kg/wk</span>';
+        return;
+      }
+
+      const r = computeForX(x, mass, bf, tdee);
+      outKg.innerHTML = fmt(r.kgPerWeek, 3) + '<span class="unit">kg</span>';
+      outWeekKcal.innerHTML = fmt(r.weekKcal, 0) + '<span class="unit">kcal</span>';
+      outDayKcal.innerHTML = fmt(r.dayKcal, 0) + '<span class="unit">kcal / day</span>';
+
+      if (tdee !== null) {
+        targetNote.textContent = fmt(tdee, 0) + ' kcal TDEE − ' + fmt(r.dayKcal, 0) + ' kcal deficit';
+        outTarget.innerHTML = fmt(r.target, 0) + '<span class="unit">kcal / day</span>';
+      } else {
+        targetNote.textContent = 'Add your TDEE above to see a target';
+        outTarget.innerHTML = '—<span class="unit">kcal / day</span>';
+      }
+
+      // Range table, X 13..20
+      let rows = '';
+      for (let xi = 13; xi <= 20; xi++) {
+        const ri = computeForX(xi, mass, bf, tdee);
+        const isCurrent = xi === x;
+        const tag = xi === 13 ? 'aggressive' : (xi === 20 ? 'conservative' : '');
+        const targetCell = tdee !== null ? fmt(ri.target, 0) : '—';
+        rows += '<tr class="' + (isCurrent ? 'current' : '') + '">' +
+          '<td>' + xi + (tag ? ' <span class="tag">' + tag + '</span>' : '') + '</td>' +
+          '<td>' + fmt(ri.kgPerWeek, 3) + '</td>' +
+          '<td>' + fmt(ri.dayKcal, 0) + '</td>' +
+          '<td>' + targetCell + '</td>' +
+          '</tr>';
+      }
+      rangeBody.innerHTML = rows;
+
+      // --- Time to goal ---
+      const leanMass = mass * (1 - bf / 100);
+      const fatMass0 = mass * (bf / 100);
+
+      let fatMassTarget = null;
+      let invalidReason = '';
+
+      if (goalMode === 'bf') {
+        const targetBF = parseFloat(goalBFInput.value);
+        if (!isFinite(targetBF) || targetBF < 0 || targetBF >= 100) {
+          invalidReason = 'Enter a valid target body fat %.';
+        } else if (targetBF >= bf) {
+          invalidReason = 'Target BF% must be below your current BF%.';
+        } else {
+          fatMassTarget = leanMass * targetBF / (100 - targetBF);
+        }
+      } else {
+        const targetMass = parseFloat(goalMassInput.value);
+        if (!isFinite(targetMass) || targetMass <= 0) {
+          invalidReason = 'Enter a valid target weight.';
+        } else if (targetMass >= mass) {
+          invalidReason = 'Target weight must be below your current weight.';
+        } else if (targetMass <= leanMass) {
+          invalidReason = 'Target weight is at or below your estimated lean mass (' + fmt(leanMass, 1) + ' kg) — not reachable through fat loss alone.';
+        } else {
+          fatMassTarget = targetMass - leanMass;
+        }
+      }
+
+      if (invalidReason) {
+        etaRow.classList.add('warn');
+        etaNote.textContent = 'adjust the goal above';
+        outWeeks.innerHTML = invalidReason;
+        outDate.textContent = '—';
+        outRateRange.innerHTML = '—<span class="unit">kg/wk</span>';
+        return;
+      }
+
+      const weeks = weeksToGoal(fatMass0, fatMassTarget, x);
+
+      if (weeks === null) {
+        etaRow.classList.add('warn');
+        etaNote.textContent = 'adjust the goal above';
+        outWeeks.innerHTML = 'This goal isn\u2019t reachable with the current inputs.';
+        outDate.textContent = '—';
+        outRateRange.innerHTML = '—<span class="unit">kg/wk</span>';
+        return;
+      }
+
+      etaRow.classList.remove('warn');
+      etaNote.textContent = 'continuous fat-mass decay at X=' + x;
+
+      const months = weeks / 4.345;
+      outWeeks.innerHTML = fmt(weeks, 1) + '<span class="unit">weeks</span>' +
+        ' <span style="font-size:14px;color:var(--dim);font-weight:500;margin-left:4px;">(~' + fmt(months, 1) + ' mo)</span>';
+
+      const today = new Date();
+      const targetDate = new Date(today.getTime() + weeks * 7 * 24 * 60 * 60 * 1000);
+      outDate.textContent = targetDate.toLocaleDateString('en-US', {year: 'numeric', month: 'short', day: 'numeric'});
+
+      const startRate = fatMass0 / x;
+      const endRate = fatMassTarget / x;
+      outRateRange.innerHTML = fmt(startRate, 3) + ' → ' + fmt(endRate, 3) + '<span class="unit">kg/wk</span>';
+    }
+
+    [massEl, heightEl, bfEl, xEl, neckEl, waistEl, hipEl, stepsEl, paceEl, gradeEl, tdeeInput, ageEl, activityEl, goalBFInput, goalMassInput]
+      .forEach(el => el.addEventListener('input', recalc));
+
+    hipField.style.display = sexEl.value === 'female' ? '' : 'none';
+    recalc();
+  </script>
+</body>
+
+</html>
